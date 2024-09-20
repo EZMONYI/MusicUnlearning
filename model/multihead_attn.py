@@ -27,9 +27,7 @@ class MultiheadAttention(nn.Module):
         self.qkv_same_dim = self.kdim == embed_dim and self.vdim == embed_dim
 
         self.num_heads = num_heads
-        self.dropout_module = Dropout(
-            dropout
-        )
+        self.dropout_module = Dropout(dropout)
 
         self.head_dim = embed_dim // num_heads
         assert (
@@ -46,7 +44,6 @@ class MultiheadAttention(nn.Module):
 
         self.k_proj = nn.Linear(self.kdim, embed_dim, bias=bias)
         self.v_proj = nn.Linear(self.vdim, embed_dim, bias=bias)
-        
         self.q_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
 
         self.out_proj = nn.Linear(embed_dim, embed_dim, bias=bias)

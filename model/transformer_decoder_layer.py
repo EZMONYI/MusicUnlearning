@@ -25,8 +25,6 @@ class TransformerDecoderLayer(nn.Module):
 
         self.activation_fn = F.relu
         activation_dropout_p = getattr(args, "activation_dropout", 0)
-        if activation_dropout_p == 0:
-            activation_dropout_p = getattr(args, "relu_dropout", 0)
         self.activation_dropout_module = Dropout(float(activation_dropout_p))
         self.normalize_before = args.decoder_normalize_before
 
@@ -39,24 +37,18 @@ class TransformerDecoderLayer(nn.Module):
             self.encoder_attn = self.build_encoder_attention(self.embed_dim, args)
             self.encoder_attn_layer_norm = nn.LayerNorm(self.embed_dim, eps=1e-5, elementwise_affine=True)
 
-        self.fc1 = self.build_fc1(
+        self.fc1 = nn.Linear(
             self.embed_dim,
             args.decoder_ffn_embed_dim,
         )
-        self.fc2 = self.build_fc2(
+        self.fc2 = nn.Linear(
             args.decoder_ffn_embed_dim,
             self.embed_dim,
         )
 
         self.final_layer_norm = nn.LayerNorm(self.embed_dim, eps=1e-5, elementwise_affine=True)
         self.need_attn = True
-        self.onnx_trace = False
 
-    def build_fc1(self, input_dim, output_dim):
-        return nn.Linear(input_dim, output_dim)
-
-    def build_fc2(self, input_dim, output_dim):
-        return nn.Linear(input_dim, output_dim)
 
     def build_self_attention(
         self, embed_dim, args, add_bias_kv=False, add_zero_attn=False
@@ -80,8 +72,6 @@ class TransformerDecoderLayer(nn.Module):
             encoder_decoder_attention=True
         )
 
-    def prepare_for_onnx_export_(self):
-        self.onnx_trace = True
 
     def residual_connection(self, x, residual):
         return residual + x

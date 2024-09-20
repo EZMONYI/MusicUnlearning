@@ -9,31 +9,28 @@ class TransformerEncoderLayer(nn.Module):
     def __init__(self, args):
         super().__init__()
         self.embed_dim = args.encoder_embed_dim
-        self.self_attn = self.build_self_attention(self.embed_dim, args)
+        self.self_attn = MultiheadAttention(
+            self.embed_dim,
+            args.encoder_attention_heads,
+            dropout=args.attention_dropout,
+            self_attention=True
+        )
         self.self_attn_layer_norm = nn.LayerNorm(self.embed_dim, eps=1e-5, elementwise_affine=True)
         self.dropout_module = Dropout(args.dropout)
         self.activation_fn =  F.relu
         activation_dropout_p = getattr(args, "activation_dropout", 0)
-        if activation_dropout_p == 0:
-            activation_dropout_p = getattr(args, "relu_dropout", 0)
         self.activation_dropout_module = Dropout(float(activation_dropout_p))
         self.normalize_before = args.encoder_normalize_before
-        self.fc1 = self.build_fc1(
+        self.fc1 = nn.Linear(
             self.embed_dim,
             args.encoder_ffn_embed_dim
         )
-        self.fc2 = self.build_fc2(
+        self.fc2 = nn.Linear(
             args.encoder_ffn_embed_dim,
             self.embed_dim
         )
 
         self.final_layer_norm = nn.LayerNorm(self.embed_dim, eps=1e-5, elementwise_affine=True)
-
-    def build_fc1(self, input_dim, output_dim):
-        return nn.Linear(input_dim, output_dim)
-
-    def build_fc2(self, input_dim, output_dim):
-        return nn.Linear(input_dim, output_dim)
 
     def build_self_attention(self, embed_dim, args):
         return MultiheadAttention(

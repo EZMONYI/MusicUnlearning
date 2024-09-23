@@ -3,7 +3,7 @@ import random
 import numpy as np
 from argparse import Namespace
 import torch
-
+from .model.songmass import build_songmass
 
 def set_seed(seed: int):
     random.seed(seed)
@@ -12,15 +12,8 @@ def set_seed(seed: int):
     torch.cuda.manual_seed_all(seed)
 
 
-def zo_perturb_parameters(zo_random_seed, named_parameters_to_optim, scaling_factor=1):
-    """
-    Perturb the parameters with random vector z.
-    Input: 
-    - random_seed: random seed for MeZO in-place perturbation (if it's None, we will use zo_random_seed)
-    - scaling_factor: theta = theta + scaling_factor * z * eps
-    """
+def zo_perturb_parameters(zo_random_seed, named_parameters_to_optim, args, scaling_factor=1):
 
-    # Set the random seed to ensure that we sample the same z for perturbation/update
     torch.manual_seed(zo_random_seed)
     
     for name, param in named_parameters_to_optim:
@@ -39,11 +32,7 @@ def zo_forward(self, model, inputs):
     return loss.detach()
 
 
-def zo_step(args, model, inputs):
-    """
-    Estimate gradient by MeZO. Return the loss from f(theta + z)
-    """
-    args = args
+def zo_step(model, inputs, args):
 
     # What parameters to optimize 
     named_parameters_to_optim = []
@@ -64,11 +53,11 @@ def zo_step(args, model, inputs):
 
     projected_grad = ((loss1 - loss2) / (2 * args.zo_eps)).item()
 
-    # No gradient accumulation support
-    assert args.gradient_accumulation_steps == 1
-
     # Reset model back to its parameters at start of step
     zo_perturb_parameters(scaling_factor=1)
+
+    # unlearn
+    projected_grad = -projected_grad
     
     return projected_grad
 
@@ -93,15 +82,21 @@ def zo_update(self, model):
     self.lr_scheduler.step()
 
 
-def train():
-    pass
-
 def main():
-    args = Namespace()
-    set_seed(8888)
 
-    for train_set_id, train_samples in enumerate(train_sets):
-        train()
+    ckpt_path = './songmass.pth'
+    model = build_songmass()
+
+    args = Namespace(num_train_epochs)
+    set_seed(8888)
+    
+    for epoch in range(num_train_epochs):
+        for idx, sample in enumerate(train_loader)
+            zo_step(model, sample)
+
+        zo_update(model)
+
+    return TrainOutput(self.state.global_step, train_loss, metrics)
 
 
 if __name__ == "__main__": 

@@ -5,7 +5,7 @@ import time
 from torch.optim.lr_scheduler import LinearLR
 import random
 import numpy as np
-from .model.build_songmass import build_songmass
+from .model.songmass import build_songmass
 from argparse import Namespace
 
 

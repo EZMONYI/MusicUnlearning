@@ -16,12 +16,9 @@ class PositionalEmbedding(nn.Module):
         self.weights = PositionalEmbedding.get_embedding(
             init_size, embedding_dim, padding_idx
         )
-        self.onnx_trace = False
         self.register_buffer("_float_tensor", torch.FloatTensor(1))
         self.max_positions = int(1e5)
 
-    def prepare_for_onnx_export_(self):
-        self.onnx_trace = True
 
     @staticmethod
     def get_embedding(
@@ -51,12 +48,12 @@ class PositionalEmbedding(nn.Module):
     def forward(
         self,
         input,
-        incremental_state,
-        timestep,
-        positions,
+        incremental_state = None,
+        timestep = None,
+        positions = None,
     ):
         """Input is expected to be of size [bsz x seqlen]."""
-        bspair = torch.onnx.operators.shape_as_tensor(input)
+        bspair = torch._shape_as_tensor(input)
         bsz, seq_len = bspair[0], bspair[1]
         max_pos = self.padding_idx + 1 + seq_len
         if self.weights is None or max_pos > self.weights.size(0):
@@ -77,18 +74,9 @@ class PositionalEmbedding(nn.Module):
                 )
             return self.weights[self.padding_idx + pos, :].expand(bsz, 1, -1)
 
-        positions = make_positions(
+        positions = self.make_positions(
             input, self.padding_idx
         )
-        if self.onnx_trace:
-            flat_embeddings = self.weights.detach().index_select(0, positions.view(-1))
-            embedding_shape = torch.cat(
-                (bsz.view(1), seq_len.view(1), torch.tensor([-1], dtype=torch.long))
-            )
-            embeddings = torch.onnx.operators.reshape_from_tensor_shape(
-                flat_embeddings, embedding_shape
-            )
-            return embeddings
         return (
             self.weights.index_select(0, positions.view(-1))
             .view(bsz, seq_len, -1)
@@ -96,6 +84,6 @@ class PositionalEmbedding(nn.Module):
         )
 
 
-def make_positions(tensor, padding_idx: int):
-    mask = tensor.ne(padding_idx).int()
-    return (torch.cumsum(mask, dim=1).type_as(mask) * mask).long() + padding_idx
+    def make_positions(tensor, padding_idx: int):
+        mask = tensor.ne(padding_idx).int()
+        return (torch.cumsum(mask, dim=1).type_as(mask) * mask).long() + padding_idx

@@ -1,4 +1,4 @@
-from .models import XTransformerEncoder, XTransformerDecoder, XTransformerModel
+from .XTransformer import XTransformerEncoder, XTransformerDecoder, XTransformerModel
 import torch.nn as nn
 from utils.dictionary import MaskedLMDictionary
 import os
@@ -6,9 +6,10 @@ from collections import OrderedDict
 from argparse import Namespace
 import torch
 from utils.dataload import build_datasets
+from .embeddings import build_embedding
 
 
-def build_songmass():
+def build_songmass(ckpt_path):
 
     def build_model(args, dicts):
         langs = [lang for lang in args.langs]
@@ -34,21 +35,6 @@ def build_songmass():
                 decoder = XTransformerDecoder(args, dicts[lang], decoder_embed_tokens)
                 decoders[lang] = decoder
         return XTransformerModel(encoders, decoders, args.eval_lang_pair)
-
-
-
-    def build_embedding(dictionary, embed_dim):
-        num_embeddings = len(dictionary) # 21904
-        padding_idx = dictionary.pad()
-        emb = Embedding(num_embeddings, embed_dim, padding_idx) 
-        return emb
-
-
-    def Embedding(num_embeddings, embedding_dim, padding_idx):
-        m = nn.Embedding(num_embeddings, embedding_dim, padding_idx=padding_idx)
-        nn.init.normal_(m.weight, mean=0, std=embedding_dim ** -0.5)
-        nn.init.constant_(m.weight[padding_idx], 0)
-        return m
 
 
     def prepare_args(args):
@@ -127,14 +113,14 @@ def build_songmass():
         return training
 
 
-    args = Namespace(data='processed', activation_dropout=0.1, max_source_positions=1024, encoder_layers=6, dropout=0.1, encoder_embed_dim=512, decoder_embed_dim=512, decoder_output_dim=512, decoder_layerdrop=0, encoder_normalize_before=False, decoder_normalize_before=False, share_decoder_input_output_embed=True, max_target_positions=1024, cross_self_attention=False, decoder_ffn_embed_dim=2048, share_all_embeddings=False,encoder_layerdrop=0,encoder_attention_heads=8, attention_dropout=0.1,encoder_ffn_embed_dim=2048, decoder_layers=6,decoder_attention_heads=8, langs = 'lyric,melody', source_lang=None,source_langs='lyric,melody', target_lang=None, target_langs='lyric,melody', valid_lang_pairs='lyric-lyric,melody-melody', mt_steps= 'lyric-melody,melody-lyric', mass_steps='lyric-lyric,melody-melody', word_mask_keep_rand='0.8,0.1,0.1', word_mask=0.25, ) 
+    args = Namespace(data='unlearn/processed', activation_dropout=0.1, max_source_positions=1024, encoder_layers=6, dropout=0.1, encoder_embed_dim=512, decoder_embed_dim=512, decoder_output_dim=512, encoder_normalize_before=False, decoder_normalize_before=False, share_decoder_input_output_embed=True, max_target_positions=1024, cross_self_attention=False, decoder_ffn_embed_dim=2048, share_all_embeddings=False,encoder_layerdrop=0,encoder_attention_heads=8, attention_dropout=0.1,encoder_ffn_embed_dim=2048, decoder_layers=6,decoder_attention_heads=8, langs = 'lyric,melody', source_lang=None,source_langs='lyric,melody', target_lang=None, target_langs='lyric,melody', valid_lang_pairs='lyric-lyric,melody-melody', mt_steps= 'lyric-melody,melody-lyric', mass_steps='lyric-lyric,melody-melody', word_mask_keep_rand='0.8,0.1,0.1', word_mask=0.25, ) 
 
     training = prepare_args(args)
 
     dicts = OrderedDict()
 
     for lang in args.langs:
-        dicts[lang] = MaskedLMDictionary.load(os.path.join(args.data, 'dict.{}.txt'.format(lang)))
+        dicts[lang] = MaskedLMDictionary.load(os.path.join(args.unlearn_data, 'dict.{}.txt'.format(lang)))
         if len(dicts) > 0:
             assert dicts[lang].pad() == dicts[args.langs[0]].pad()
             assert dicts[lang].eos() == dicts[args.langs[0]].eos()
@@ -143,16 +129,22 @@ def build_songmass():
         print('| [{}] dictionary: {} types'.format(lang, len(dicts[lang])))
 
     model = build_model(args, dicts)
+    
 
-
-    train_dataset = build_datasets(args, dicts, 'train', training)
-    valid_dataset = build_datasets(args, dicts, 'valid', training)
-
+    unlearn_dataset = build_datasets(args, dicts, 'train', training)
+    unlearn_dataset.ordered_indices()
+    args.data='retrain/processed'
+    retain_dataset = build_datasets(args, dicts, 'train', training)
+    retain_dataset.ordered_indices()
 
     if torch.cuda.is_available():
         device = torch.device("cuda")
-    model_path = 'songmass.pth'
+    model_path = ckpt_path
     ckpt = torch.load(model_path)
-    model.load_state_dict(ckpt['model'], strict=False)
+    
+    model.load_state_dict(ckpt, strict=False)
 
-    return model
+    # for name, param in model.named_parameters():
+    #     print(name, param.data)
+
+    return model, unlearn_dataset, retain_dataset

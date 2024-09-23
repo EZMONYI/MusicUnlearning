@@ -1,0 +1,46 @@
+no_progress_bar=False, log_interval=100, log_format=None, tensorboard_logdir=None, seed=1, cpu=False, tpu=False, bf16=False, memory_efficient_bf16=False, fp16=False, memory_efficient_fp16=False, fp16_no_flatten_grads=False, fp16_init_scale=128, fp16_scale_window=None, fp16_scale_tolerance=0.0, min_loss_scale=0.0001, threshold_loss_scale=None, user_dir=None, empty_cache_freq=0, all_gather_list_size=16384, model_parallel_size=1, checkpoint_suffix='', checkpoint_shard_count=1, quantization_config_path=None, profile=False, criterion='label_smoothed_cross_entropy', tokenizer=None, bpe=None, optimizer='adam', lr_scheduler='inverse_sqrt', scoring='bleu', task='translation', num_workers=10, skip_invalid_size_inputs_valid_test=False, max_tokens=8192, batch_size=None, required_batch_size_multiple=8, required_seq_len_multiple=1, dataset_impl=None, data_buffer_size=10, train_subset='train', valid_subset='valid,test', validate_interval=1, validate_interval_updates=0, validate_after_updates=0, disable_validation=False, max_tokens_valid=None, batch_size_valid=None, curriculum=0, gen_subset='test', num_shards=1, shard_id=0, distributed_world_size=1, distributed_rank=0, distributed_backend='nccl', distributed_init_method=None, distributed_port=-1, device_id=0, distributed_no_spawn=False, ddp_backend='c10d', bucket_cap_mb=25, fix_batches_to_gpus=False, find_unused_parameters=False, fast_stat_sync=False, broadcast_buffers=False, distributed_wrapper='DDP', slowmo_momentum=None, slowmo_algorithm='LocalSGD', localsgd_frequency=3, nprocs_per_node=1, pipeline_model_parallel=False, pipeline_balance=None, pipeline_devices=None, pipeline_chunks=0, pipeline_encoder_balance=None, pipeline_encoder_devices=None, pipeline_decoder_balance=None, pipeline_decoder_devices=None, pipeline_checkpoint='never', zero_sharding='none', arch='transformer', max_epoch=0, max_update=500000, stop_time_hours=0, clip_norm=0.0, sentence_avg=False, update_freq=[1], lr=[0.0005], min_lr=-1.0, use_bmuf=False, save_dir='checkpoints/example', restore_file='checkpoint_last.pt', finetune_from_model=None, reset_dataloader=False, reset_lr_scheduler=False, reset_meters=False, reset_optimizer=False, optimizer_overrides='{}', save_interval=1, save_interval_updates=0, keep_interval_updates=-1, keep_last_epochs=-1, keep_best_checkpoints=-1, no_save=False, no_epoch_checkpoints=True, no_last_checkpoints=False, no_save_optimizer_state=False, best_checkpoint_metric='accuracy', maximize_best_checkpoint_metric=True, patience=-1, no_token_positional_embeddings=False, no_cross_attention=False, cross_self_attention=False, encoder_layerdrop=0, decoder_layerdrop=0, encoder_layers_to_keep=None, decoder_layers_to_keep=None, quant_noise_pq=0, quant_noise_pq_block_size=8, quant_noise_scalar=0, label_smoothing=0.0, report_accuracy=True, ignore_prefix_size=0, adam_betas="'(0.9, 0.98)'", adam_eps=1e-06, weight_decay=0.0001, use_old_adam=False, warmup_updates=4000, warmup_init_lr=1e-07, data='models/telemelody/training/lyric2rhythm/data-bin/example', source_lang=None, target_lang=None, load_alignments=False, left_pad_source='True', left_pad_target='False', max_source_positions=1024, max_target_positions=1024, upsample_primary=1, truncate_source=False, num_batch_buckets=0, eval_bleu=False, eval_bleu_detok='space', eval_bleu_detok_args=None, eval_tokenized_bleu=False, eval_bleu_remove_bpe=None, eval_bleu_args=None, eval_bleu_print_samples=False, encoder_embed_dim=256, decoder_embed_dim=256, encoder_attention_heads=4, decoder_attention_heads=4, encoder_layers=4, decoder_layers=4, dropout=0.2, no_seed_provided=False, encoder_embed_path=None, encoder_ffn_embed_dim=2048, encoder_normalize_before=False, encoder_learned_pos=False, decoder_embed_path=None, decoder_ffn_embed_dim=2048, decoder_normalize_before=False, decoder_learned_pos=False, attention_dropout=0.0, activation_dropout=0.0, activation_fn='relu', adaptive_softmax_cutoff=None, adaptive_softmax_dropout=0, share_decoder_input_output_embed=False, share_all_embeddings=False, adaptive_input=False, decoder_output_dim=256, decoder_input_dim=256, no_scale_embedding=False, layernorm_embedding=False, tie_adaptive_weights=False, distributed_num_procs=1
+
+
+def base_architecture(args):
+    args.encoder_embed_path = getattr(args, "encoder_embed_path", None)
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 512)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 2048)
+    args.encoder_layers = getattr(args, "encoder_layers", 6)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 8)
+    args.encoder_normalize_before = getattr(args, "encoder_normalize_before", False)
+    args.encoder_learned_pos = getattr(args, "encoder_learned_pos", False)
+    args.decoder_embed_path = getattr(args, "decoder_embed_path", None)
+    args.decoder_embed_dim = getattr(args, "decoder_embed_dim", args.encoder_embed_dim)
+    args.decoder_ffn_embed_dim = getattr(
+        args, "decoder_ffn_embed_dim", args.encoder_ffn_embed_dim
+    )
+    args.decoder_layers = getattr(args, "decoder_layers", 6)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
+    args.decoder_normalize_before = getattr(args, "decoder_normalize_before", False)
+    args.decoder_learned_pos = getattr(args, "decoder_learned_pos", False)
+    args.attention_dropout = getattr(args, "attention_dropout", 0.0)
+    args.activation_dropout = getattr(args, "activation_dropout", 0.0)
+    args.activation_fn = getattr(args, "activation_fn", "relu")
+    args.dropout = getattr(args, "dropout", 0.1)
+    args.adaptive_softmax_cutoff = getattr(args, "adaptive_softmax_cutoff", None)
+    args.adaptive_softmax_dropout = getattr(args, "adaptive_softmax_dropout", 0)
+    args.share_decoder_input_output_embed = getattr(
+        args, "share_decoder_input_output_embed", False
+    )
+    args.share_all_embeddings = getattr(args, "share_all_embeddings", False)
+    args.no_token_positional_embeddings = getattr(
+        args, "no_token_positional_embeddings", False
+    )
+    args.adaptive_input = getattr(args, "adaptive_input", False)
+    args.no_cross_attention = getattr(args, "no_cross_attention", False)
+    args.cross_self_attention = getattr(args, "cross_self_attention", False)
+
+    args.decoder_output_dim = getattr(
+        args, "decoder_output_dim", args.decoder_embed_dim
+    )
+    args.decoder_input_dim = getattr(args, "decoder_input_dim", args.decoder_embed_dim)
+
+    args.no_scale_embedding = getattr(args, "no_scale_embedding", False)
+    args.layernorm_embedding = getattr(args, "layernorm_embedding", False)
+    args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", False)
+

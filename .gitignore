@@ -1,5 +1,6 @@
-songmass.pth
 processed/
 .vscode/
 __pycache__/
 .DS_Store
+*.pt
+*.pth

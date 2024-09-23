@@ -49,6 +49,7 @@ class TransformerDecoderLayer(nn.Module):
         self.final_layer_norm = nn.LayerNorm(self.embed_dim, eps=1e-5, elementwise_affine=True)
         self.need_attn = True
 
+        self.onnx_trace = False
 
     def build_self_attention(
         self, embed_dim, args, add_bias_kv=False, add_zero_attn=False
@@ -79,13 +80,13 @@ class TransformerDecoderLayer(nn.Module):
     def forward(
         self,
         x,
-        encoder_out,
-        encoder_padding_mask,
-        incremental_state,
-        prev_self_attn_state,
-        prev_attn_state,
-        self_attn_mask,
-        self_attn_padding_mask,
+        encoder_out = None,
+        encoder_padding_mask = None,
+        incremental_state = None,
+        prev_self_attn_state = None,
+        prev_attn_state = None,
+        self_attn_mask = None,
+        self_attn_padding_mask = None,
         need_attn = False,
         need_head_weights = False,
     ):
